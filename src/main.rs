@@ -1,8 +1,13 @@
 use std::f32::consts::TAU;
 
 use image;
+use nokhwa::{
+    pixel_format::RgbFormat,
+    utils::{CameraIndex, RequestedFormat, RequestedFormatType},
+    Camera,
+};
 
-fn main() {
+fn generate_calibration_pattern() {
     let img_width = 1280;
     let img_height = 1280;
 
@@ -30,4 +35,23 @@ fn main() {
 
     // Save the image, the format is deduced from the path
     imgbuf.save("calibration_pattern.png").unwrap();
+}
+
+fn main() {
+    // first camera in system
+    let index = CameraIndex::Index(0);
+    // request the absolute highest resolution CameraFormat that can be decoded to RGB.
+    let requested =
+        RequestedFormat::new::<RgbFormat>(RequestedFormatType::AbsoluteHighestFrameRate);
+    // make the camera
+    let mut camera = Camera::new(index, requested).unwrap();
+
+    // get a frame
+    let frame = camera.frame().unwrap();
+    println!("Captured Single Frame of {}", frame.buffer().len());
+    // decode into an ImageBuffer
+    let decoded = frame.decode_image::<RgbFormat>().unwrap();
+    println!("Decoded Frame of {}", decoded.len());
+
+    decoded.save("camera_image.png").unwrap();
 }
