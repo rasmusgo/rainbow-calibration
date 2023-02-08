@@ -6,9 +6,45 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+eframe = { version = "0.20.1", default-features = false, features = [
+    #"accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
+    "default_fonts", # Embed the default egui fonts.
+    "wgpu",          # Use the wgpu rendering backend.
+    "persistence",   # Enable restoring app state when restarting the app.
+] }
+egui = "0.20.1"
 image = "0.24.5"
+nokhwa = { version = "0.10.0", features = ["input-native", "output-wgpu"] }
+serde = { version = "1", features = ["derive"] }
 
-[dependencies.nokhwa]
-version = "0.10.0"
-# Use the native input backends, enable WGPU integration
-features = ["input-native", "output-wgpu"]
+# native:
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tracing-subscriber = "0.3"
+
+# web:
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+console_error_panic_hook = "0.1.6"
+tracing-wasm = "0.2"
+wasm-bindgen-futures = "0.4"
+
+
+[profile.release]
+opt-level = 2 # fast and small wasm
+
+# Optimize all dependencies even in debug builds:
+[profile.dev.package."*"]
+opt-level = 2
+
+
+[patch.crates-io]
+
+# If you want to use the bleeding edge version of egui and eframe:
+# egui = { git = "https://github.com/emilk/egui", branch = "master" }
+# eframe = { git = "https://github.com/emilk/egui", branch = "master" }
+
+# If you fork https://github.com/emilk/egui you can test with:
+# egui = { path = "../egui/crates/egui" }
+# eframe = { path = "../egui/crates/eframe" }
+
+# [replace]
+# "wgpu:0.14.1" = { version = "0.14.2" }
