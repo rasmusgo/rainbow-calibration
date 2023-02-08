@@ -1,3 +1,5 @@
+use crate::calibration_pattern::generate_calibration_pattern;
+
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -8,6 +10,11 @@ pub struct App {
     // this how you opt-out of serialization of a member
     #[serde(skip)]
     value: f32,
+
+    #[serde(skip)]
+    texture: Option<egui::TextureHandle>,
+    #[serde(skip)]
+    texture_size: Option<(u32, u32)>,
 }
 
 impl Default for App {
@@ -16,6 +23,8 @@ impl Default for App {
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7,
+            texture: Default::default(),
+            texture_size: Default::default(),
         }
     }
 }
@@ -45,7 +54,12 @@ impl eframe::App for App {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let Self { label, value } = self;
+        let Self {
+            label,
+            value,
+            texture,
+            texture_size,
+        } = self;
 
         // Examples of how to create different panels and windows.
         // Pick whichever suits you.
@@ -65,6 +79,7 @@ impl eframe::App for App {
         });
 
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
+            egui::warn_if_debug_build(ui);
             ui.heading("Side Panel");
 
             ui.horizontal(|ui| {
@@ -93,15 +108,33 @@ impl eframe::App for App {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
+            let (img_width, img_height) = if ui.available_size().is_finite() {
+                (ui.available_width() as _, ui.available_height() as _)
+            } else {
+                (1280, 1280)
+            };
+            if let Some(texture_size) = texture_size {
+                if img_width != texture_size.0 || img_height != texture_size.1 {
+                    *texture = None;
+                }
+            }
+            let texture: &egui::TextureHandle = texture.get_or_insert_with(|| {
+                *texture_size = Some((img_width, img_height));
+                // if let Some(state) =_frame.wgpu_render_state() {
+                //     state.renderer.write().register_native_texture(device, texture, texture_filter)
+                // }
+                let image_buffer = generate_calibration_pattern(img_width, img_height);
+                let size = [image_buffer.width() as _, image_buffer.height() as _];
+                let pixels = image_buffer.as_flat_samples();
+                ui.ctx().load_texture(
+                    "my-image",
+                    egui::ColorImage::from_rgb(size, pixels.as_slice()),
+                    Default::default(),
+                )
+            });
 
-            ui.heading("eframe template");
-            ui.hyperlink("https://github.com/emilk/eframe_template");
-            ui.add(egui::github_link_file!(
-                "https://github.com/emilk/eframe_template/blob/master/",
-                "Source code."
-            ));
-            egui::warn_if_debug_build(ui);
+            // Show the image:
+            ui.image(texture, texture.size_vec2());
         });
 
         if false {
