@@ -61,25 +61,7 @@ impl eframe::App for App {
             texture_size,
         } = self;
 
-        // Examples of how to create different panels and windows.
-        // Pick whichever suits you.
-        // Tip: a good default choice is to just keep the `CentralPanel`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
-
-        #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
-            egui::menu::bar(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    if ui.button("Quit").clicked() {
-                        _frame.close();
-                    }
-                });
-            });
-        });
-
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
-            egui::warn_if_debug_build(ui);
             ui.heading("Side Panel");
 
             ui.horizontal(|ui| {
@@ -104,6 +86,7 @@ impl eframe::App for App {
                     );
                     ui.label(".");
                 });
+                egui::warn_if_debug_build(ui);
             });
         });
 
@@ -136,14 +119,5 @@ impl eframe::App for App {
             // Show the image:
             ui.image(texture, texture.size_vec2());
         });
-
-        if false {
-            egui::Window::new("Window").show(ctx, |ui| {
-                ui.label("Windows can be moved by dragging them.");
-                ui.label("They are automatically sized based on contents.");
-                ui.label("You can turn on resizing and scrolling if you like.");
-                ui.label("You would normally choose either panels OR windows.");
-            });
-        }
     }
 }
