@@ -1,10 +1,11 @@
+use image::{ImageBuffer, Rgb};
 use nokhwa::{
     pixel_format::RgbFormat,
     utils::{CameraIndex, RequestedFormat, RequestedFormatType},
     Camera,
 };
 
-pub fn capture_camera_image() {
+pub fn capture_camera_image() -> ImageBuffer<Rgb<u8>, Vec<u8>> {
     // first camera in system
     let index = CameraIndex::Index(0);
     // request the absolute highest resolution CameraFormat that can be decoded to RGB.
@@ -20,5 +21,6 @@ pub fn capture_camera_image() {
     let decoded = frame.decode_image::<RgbFormat>().unwrap();
     println!("Decoded Frame of {}", decoded.len());
 
-    decoded.save("camera_image.png").unwrap();
+    // decoded.save("camera_image.png").unwrap();
+    decoded
 }
